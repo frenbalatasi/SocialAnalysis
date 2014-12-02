@@ -7,24 +7,32 @@
     android:paddingBottom="5dp">
 
     <ImageView
-        android:id="@+id/btn_pair"
+        android:id="@+id/buttonRemove"
         android:layout_width="50dp"
         android:layout_height="wrap_content"        
         android:layout_centerInParent="true"
         android:layout_alignParentRight="true"
-        android:text="@string/text_pair"
         android:src="@drawable/remove"  />
     
-    <EditText
-        android:id="@+id/tv_name"
+    <TextView
+        android:id="@+id/textNotes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@+id/btn_pair"
-        android:layout_alignTop="@+id/btn_pair"
+        android:layout_toLeftOf="@+id/buttonRemove"
+        android:layout_alignBottom="@+id/buttonRemove"
         android:layout_alignParentLeft="true"
         android:textSize="24sp"
         android:textColor="#FFFFFF"
         android:text="Lorem ipsum dolor"/>
+    
+    <ImageView
+        android:id="@+id/playButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@+id/buttonRemove"
+        android:layout_alignBottom="@+id/buttonRemove"
+        android:layout_alignParentLeft="true"
+        android:src="@drawable/play"/>
 
     
 </RelativeLayout>

@@ -2,14 +2,16 @@ package at.ac.uniklu.crosmos.socialanalysis;
 
 import java.util.Date;
 
-public abstract class Notes {
+public class Notes {
 	
-	//-------------------
-	//Attributes of Notes
-	//-------------------
+	//*********************
+	// Attributes of Notes
+	//*********************
 	private String UID;
 	private int location;
 	private Date timestamp;
+	private String noteType;
+
 	
 	/** Constructor */
 	public Notes(){
@@ -17,6 +19,10 @@ public abstract class Notes {
 		setLocation(0);
 		setTimestamp(null);
 	}
+	
+	//*********************
+	// Setters and Getters
+	//*********************
 
 	public int getLocation() {
 		return location;
@@ -40,6 +46,15 @@ public abstract class Notes {
 
 	public void setTimestamp(Date timestamp) {
 		this.timestamp = timestamp;
+	}
+	
+	protected void setNoteType(String noteType)
+	{
+		this.noteType = noteType;
+	}
+	
+	public String getNoteType(){
+		return noteType;
 	}
 
 }

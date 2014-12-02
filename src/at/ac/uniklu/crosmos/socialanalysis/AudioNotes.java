@@ -2,16 +2,18 @@ package at.ac.uniklu.crosmos.socialanalysis;
 
 public class AudioNotes extends Notes {
 
-	//--------------------------------
-	//Attributes specific to AudioNotes
-	//--------------------------------
+	//-----------------------------------
+	// Attributes specific to AudioNotes
+	//-----------------------------------
 	
 	private String audioFilePath;
 	final private Boolean isEditable = false;
 	
+	/** Constructor */
 	public AudioNotes() {
 		super();
 		setAudioFilePath("");
+		super.setNoteType("audio");
 	}
 
 	public String getAudioFilePath() {
@@ -25,5 +27,4 @@ public class AudioNotes extends Notes {
 	public Boolean isEditable() {
 		return isEditable;
 	}
-
 }

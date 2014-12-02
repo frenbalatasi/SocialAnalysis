@@ -7,6 +7,14 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="at.ac.uniklu.crosmos.socialanalysis.MainActivity" >
+    
+    <ListView
+        android:id="@+id/listViewNotes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonSend"
+        android:layout_alignParentTop="true"
+        android:cacheColorHint="#00000000" />
 
     <Button
         android:id="@+id/buttonSend"
@@ -20,11 +28,10 @@
         android:id="@+id/editTextBottom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/buttonSend"
+        android:layout_alignBottom="@+id/buttonSend"
         android:layout_toLeftOf="@+id/buttonSend"
         android:layout_toRightOf="@+id/spinnerBottom"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp" />
+        android:textColor="#FFFFFF"/>
 
     <Spinner
         android:id="@+id/spinnerBottom"
