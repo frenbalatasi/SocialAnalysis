@@ -14,7 +14,8 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/buttonSend"
         android:layout_alignParentTop="true"
-        android:cacheColorHint="#00000000" />
+        android:cacheColorHint="#00000000" 
+        android:listSelector="@android:color/transparent"/>
 
     <Button
         android:id="@+id/buttonSend"

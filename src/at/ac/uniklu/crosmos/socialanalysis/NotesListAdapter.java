@@ -22,6 +22,7 @@ public class NotesListAdapter extends BaseAdapter{
 	private ArrayList<Notes> notesList;
 	private OnRemoveButtonClickListener rbListener;
 	private OnTextViewClickListener etListener;
+	private OnImageViewClickListener pbListener;
 	
 	public NotesListAdapter(Context context) { 
         mInflater = LayoutInflater.from(context);        
@@ -49,6 +50,10 @@ public class NotesListAdapter extends BaseAdapter{
 	
 	public void setTextViewClickListener(OnTextViewClickListener listener) {
 		etListener = listener;
+	}
+	
+	public void setImageViewClickListener(OnImageViewClickListener listener) {
+		pbListener = listener;
 	}
 	
 	public int getCount() {
@@ -113,6 +118,15 @@ public class NotesListAdapter extends BaseAdapter{
 			}
 		});
 		
+		holder.playButton.setOnClickListener(new View.OnClickListener() {			
+			@Override
+			public void onClick(View v) {
+				if (etListener != null) {
+					pbListener.onImageViewClick(position);
+				}
+			}
+		});
+		
         return convertView;
 	}
 
@@ -130,5 +144,9 @@ public class NotesListAdapter extends BaseAdapter{
 	
 	public interface OnTextViewClickListener {
 		public abstract void onTextViewClick(int position);
+	}
+	
+	public interface OnImageViewClickListener {
+		public abstract void onImageViewClick(int position);
 	}
 }

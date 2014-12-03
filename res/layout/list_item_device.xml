@@ -24,15 +24,13 @@
         android:textSize="24sp"
         android:textColor="#FFFFFF"
         android:text="Lorem ipsum dolor"/>
-    
+
     <ImageView
         android:id="@+id/playButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toLeftOf="@+id/buttonRemove"
-        android:layout_alignBottom="@+id/buttonRemove"
-        android:layout_alignParentLeft="true"
-        android:src="@drawable/play"/>
-
+        android:layout_alignBottom="@+id/textNotes"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/play" />
     
 </RelativeLayout>
