@@ -64,10 +64,10 @@ public class MainActivity extends Activity {
 		
 		spAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, noteType);
 	    spinner.setAdapter(spAdapter);
-		
-		editTextBottom.setFocusable(false);
-    	editTextBottom.setFocusableInTouchMode(false);
     	
+	    editTextBottom.setFocusable(false);
+	    editTextBottom.setFocusableInTouchMode(false);
+	    
     	toggleListeners();
 
 	}
@@ -111,18 +111,18 @@ public class MainActivity extends Activity {
 			}
 		});
 		
-		// Show the keyboard when EditText at the bottom has a focus on it
-		editTextBottom.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-		    @Override
-		    public void onFocusChange(View v, boolean hasFocus) {
-		        if (hasFocus) {
-		        	showSoftKeyboard(editTextBottom);
-		        }
-		        else if(!hasFocus) {
-		        	hideSoftKeyboard(editTextBottom);
-		        }
-		    }
-		});
+//		// Show the keyboard when EditText at the bottom has a focus on it
+//		editTextBottom.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+//		    @Override
+//		    public void onFocusChange(View v, boolean hasFocus) {
+//		        if (hasFocus) {
+//		        	showSoftKeyboard(editTextBottom);
+//		        }
+//		        else {
+//		        	hideSoftKeyboard(editTextBottom);
+//		        }
+//		    }
+//		});
 		
 		// ClickListener for Send Button
 		buttonSend.setOnClickListener(new View.OnClickListener() {
@@ -132,6 +132,9 @@ public class MainActivity extends Activity {
             		TextNotes newTxtNote = new TextNotes();
             		newTxtNote.setText(editTextBottom.getText().toString());
             		notesList.add(newTxtNote);
+            		
+            		editTextBottom.setCursorVisible(false);
+            		hideSoftKeyboard(editTextBottom);
             	}
             	
             	else if(positionOfSpinner == 1) {
@@ -144,44 +147,51 @@ public class MainActivity extends Activity {
             		nAdapter.addData(newVideoNote);
             	}
             	
-            	editTextBottom.setFocusable(false);
-            	editTextBottom.setFocusableInTouchMode(false);
             	nAdapter.notifyDataSetChanged();
             	addNoteToServer();
+            	
+            	editTextBottom.setText("");
             }
         });
 		
 		// When EditText at the bottom has been touched, give the focus on it.
-		editTextBottom.setOnTouchListener(new View.OnTouchListener() {
-	        @Override
-	        public boolean onTouch(View v, MotionEvent event) {
-	            v.setFocusable(true);
-	            v.setFocusableInTouchMode(true);
-	            return false;
-	        }
+		editTextBottom.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				editTextBottom.setCursorVisible(true);
+				editTextBottom.setFocusable(true);
+				editTextBottom.setFocusableInTouchMode(true);
+				
+			}
 	    });
 		
 		// Listens when an item from spinner gets selected
 		spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {   
 			  @Override
 		      public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-		            positionOfSpinner = arg2;
+				  	positionOfSpinner = arg2;
 		            
 		            if(positionOfSpinner == 0) {
-		            	editTextBottom.setFocusable(true);
-		            	editTextBottom.setFocusableInTouchMode(true);
 		            	editTextBottom.setVisibility(View.VISIBLE);
 		            	imageView.setVisibility(View.INVISIBLE);
+		            	
+		            	editTextBottom.setCursorVisible(true);
+		            	editTextBottom.setFocusable(true);
+		            	editTextBottom.setFocusableInTouchMode(true);
+		            	showSoftKeyboard(editTextBottom);
+		            	
+		            	showAsToast("Type mode: ON");
 		            }
 		            	
 		            if(positionOfSpinner == 1 || positionOfSpinner == 2) {
-		            	editTextBottom.setFocusable(false);
-		            	editTextBottom.setFocusableInTouchMode(false);
+		            	hideSoftKeyboard(editTextBottom);
+		            	
 		            	editTextBottom.setVisibility(View.INVISIBLE);
 		            	imageView.setVisibility(View.VISIBLE);
+		            	
+		            	showAsToast("Recording mode: ON");
 		            }
 		            	
-		            showAsToast("You have selected "+noteType[+positionOfSpinner]);
 		            editTextBottom.setText("");
 		      }
 			  
