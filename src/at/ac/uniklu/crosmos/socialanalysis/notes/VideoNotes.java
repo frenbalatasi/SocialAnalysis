@@ -1,10 +1,10 @@
-package at.ac.uniklu.crosmos.socialanalysis;
+package at.ac.uniklu.crosmos.socialanalysis.notes;
 
 public class VideoNotes extends Notes {
 
-	//-----------------------------------
+	//**********************************
 	// Attributes specific to VideoNotes
-	//-----------------------------------
+	//**********************************
 	
 	private String videoFilePath;
 	final private Boolean isEditable = false;
@@ -13,7 +13,7 @@ public class VideoNotes extends Notes {
 	public VideoNotes() {
 		super();
 		setVideoFilePath("");
-		super.setNoteType("video");
+		setNoteType("video");
 	}
 	
 	public String getVideoFilePath() {

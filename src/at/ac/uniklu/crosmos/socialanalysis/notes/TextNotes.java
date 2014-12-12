@@ -1,10 +1,10 @@
-package at.ac.uniklu.crosmos.socialanalysis;
+package at.ac.uniklu.crosmos.socialanalysis.notes;
 
 public class TextNotes extends Notes {
 
-	//----------------------------------
+	//*********************************
 	// Attributes specific to TextNotes
-	//----------------------------------
+	//*********************************
 	
 	private String text;
 	final private Boolean isEditable = true;
@@ -13,7 +13,7 @@ public class TextNotes extends Notes {
 	public TextNotes() {
 		super();
 		setText("");
-		super.setNoteType("type");
+		setNoteType("type");
 	}
 
 	public String getText() {

@@ -1,12 +1,18 @@
-package at.ac.uniklu.crosmos.socialanalysis;
+package at.ac.uniklu.crosmos.socialanalysis.gui;
 
 import java.util.ArrayList;
-import java.util.List;
-
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
+import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -24,25 +30,50 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import at.ac.uniklu.crosmos.socialanalysis.R;
+import at.ac.uniklu.crosmos.socialanalysis.notes.AudioNotes;
+import at.ac.uniklu.crosmos.socialanalysis.notes.Notes;
+import at.ac.uniklu.crosmos.socialanalysis.notes.TextNotes;
+import at.ac.uniklu.crosmos.socialanalysis.notes.VideoNotes;
 
+/** Main activity for the SocialAnalysis app.
+ *  The only activity, which is defined and is present in the SocialAnalysis app.
+ *  The activity where the user can take notes and send them to the server.
+ *  
+ *  @author Arda Akcay <ardaakcay@gmail.com>
+ *  @version 1.0
+ */
 public class MainActivity extends Activity {
 	
+	//**********************
+	// GUI-related variables
+	//**********************
+	private Button buttonSend;
 	private Spinner spinner;
 	private EditText editTextBottom;
 	private ImageView imageView;
 	private ListView listView;
+	
+	//***************************
+	// Notes-related variables
+	//***************************
 	private NotesListAdapter nAdapter;
 	private ArrayAdapter<String> spAdapter;
 	private ArrayList<Notes> notesList;
-	private Button buttonSend;
 	
+	//***************************
+	// Location-related variables
+	//***************************
+	private LocationManager locationManager;
+	private LocationListener locationListener;
+	private String locationProvider;
+	private double latitude = 0.0;
+	private double longitude = 0.0;
 	
-	private String[] noteType = {
-	      "Type>",
-	      "Audio>",
-	      "Video>",
-	};
-	
+	//**************************************************
+	// Other global variables, which are specific to GUI
+	//**************************************************
+	private String[] noteType = {"Type>","Audio>","Video>"};
 	private int positionOfSpinner = 0;
 
 	@Override
@@ -58,20 +89,78 @@ public class MainActivity extends Activity {
 		buttonSend = (Button)findViewById(R.id.buttonSend);
 		notesList = new ArrayList<Notes>();
 		
+		// The list of notes, which are kept in the ListView
 		nAdapter = new NotesListAdapter(this);
 		nAdapter.setData(notesList);
 		nAdapter.notifyDataSetChanged();
 		listView.setAdapter(nAdapter);
 		
-		editTextBottom.setCursorVisible(false);
-		editTextBottom.setFocusable(false);
-	    editTextBottom.setFocusableInTouchMode(false);
-		
+	    // Spinner selection box for selection of the type of notes
 		spAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, noteType);
 	    spinner.setAdapter(spAdapter);
     	
+	    // Location services registration and obtaining the last known location
+	    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+	    locationProvider = locationManager.getBestProvider(new Criteria(), false);
+	    Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+	    
+	    // Toggling the listeners needed for the main activity
     	toggleListeners();
+    	
+    	// If last location is known, then update the location information with that
+    	// in order to save some time while obtaining the current location information
+    	if (lastKnownLocation != null) {
+    	      locationListener.onLocationChanged(lastKnownLocation);
+    	} 
 
+	}
+	
+	@Override
+	protected void onResume() {
+	    super.onResume();
+	    
+	    // Every time that the app is activated, check if the location service is enabled
+	    // If not, show the AlertDialog to drag the user.
+	    checkIfLocationServiceIsActivated();
+	    
+	    // Request location updates from each provider, which is available in every 5 seconds and 1 meter
+	    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 1, locationListener);
+	    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1, locationListener);
+	    locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 5000, 1, locationListener);
+	    
+	    // EditText field at the bottom of activity, which has no focus in the beginning
+ 		editTextBottom.setCursorVisible(false);
+ 		editTextBottom.setFocusable(false);
+ 	    editTextBottom.setFocusableInTouchMode(false);
+ 	    
+	}
+	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		
+		// Stop getting location updates when the user has no focus on the app
+		locationManager.removeUpdates(locationListener);
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		
+		// Stop getting location updates when the app finally is destroyed
+		locationManager.removeUpdates(locationListener);
+		
+		// Destroy the ArrayList of Notes
+		notesList.clear();
+	}
+
+
+	@Override
+	protected void onPause() {
+	    super.onPause();
+	    
+	    // Stop getting location updates when the user has no focus on the app
+	    locationManager.removeUpdates(locationListener);
 	}
 	
 	/** Add the related note to the server */
@@ -84,7 +173,9 @@ public class MainActivity extends Activity {
 		
 	}
 	
-	/** Enabling all the listeners needed */
+	/** Enabling all the listeners needed for the main activity.
+	 *  @return void
+	 **/
 	private void toggleListeners() {
 		
 		// ClickListener for Remove Button
@@ -118,11 +209,9 @@ public class MainActivity extends Activity {
 		    @Override
 		    public void onFocusChange(View v, boolean hasFocus) {
 		        if (hasFocus) {
-		        	showAsToast("I got the attention NOW! :)");
 		        	showSoftKeyboard(editTextBottom);
 		        }
 		        else {
-		        	showAsToast("I lost the attention :(");
 		        	hideSoftKeyboard(editTextBottom);
 		        }
 		    }
@@ -135,6 +224,8 @@ public class MainActivity extends Activity {
             	if(positionOfSpinner == 0) {
             		TextNotes newTxtNote = new TextNotes();
             		newTxtNote.setText(editTextBottom.getText().toString());
+            		newTxtNote.setLongitude(longitude);
+            		newTxtNote.setLatitude(latitude);
             		notesList.add(newTxtNote);
             		
             		editTextBottom.setText("");
@@ -209,22 +300,72 @@ public class MainActivity extends Activity {
 		      }
 		});
 		
+		// Listener for location updates
+		locationListener = new LocationListener() {
+		    public void onLocationChanged(Location location) {
+		    	latitude = location.getLatitude();
+		    	longitude = location.getLongitude();
+		    	showAsToast("Longitude: "+longitude+"\nLatitude: "+latitude);
+		    }
+		    public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+		    public void onProviderEnabled(String provider) {}
+
+		    public void onProviderDisabled(String provider) {}
+		};
+		
 	}
 	
-	/** Hide the soft keyboard from the activity */
+	/** Checking if the location services are enabled or not. 
+	 *  If no, then drag the user the location settings menu.
+	 *  @return void
+	 **/
+	private void checkIfLocationServiceIsActivated() {
+		
+	    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    	boolean enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+		if (!enabled) {
+			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+			alertDialogBuilder.setTitle("Warning!");	 
+			alertDialogBuilder.setMessage("In order to use our services, we kindly ask you to enable location services. " +
+					"You will be re-directed to Location Settings of your smartphone, when you click OK below. You cannot use our services " +
+					"without activating location services of your smartphone.");
+			alertDialogBuilder.setCancelable(false);
+			alertDialogBuilder.setPositiveButton("OK",new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog,int id) {
+						Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+						startActivity(intent);
+					}
+			});				
+			
+			AlertDialog alertDialog = alertDialogBuilder.create();
+			alertDialog.show();
+		}
+	}
+	
+	/** Hide the soft keyboard from the activity 
+	 *  @param edtTxt EditText view where the virtual keyboard is supposed to be hidden.
+	 *  @return void
+	 **/
 	private void hideSoftKeyboard(EditText edtTxt) {
 		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.hideSoftInputFromWindow(edtTxt.getWindowToken(), 0);
 		
 	}
 	
-	/** Show the soft keyboard in the activity */
+	/** Show the soft keyboard in the activity
+	 *  @param edtTxt EditText view where the virtual keyboard is supposed to be exposed.
+	 *  @return void
+	 **/
 	private void showSoftKeyboard(EditText edtTxt) {
 		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT,0);
 	}
 	
-	/** Show the related text as Toast to MainActivity */
+	/** Show the related text as Toast to MainActivity 
+	 *  @param message The message that will be shown in the Toast view
+	 *  @return void
+	 **/
 	private void showAsToast(String message) {
 		Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
 	}
