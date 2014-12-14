@@ -1,7 +1,5 @@
 package at.ac.uniklu.crosmos.socialanalysis.notes;
 
-import java.util.Date;
-
 /** Notes class, which is the parent class to be the reference to
  *  its child classes: TextNotes, VideoNotes, AudioNotes. It's an abstract
  *  class where it holds the common attributes of the notes such as location
@@ -19,7 +17,7 @@ public abstract class Notes {
 	private String UID;
 	private double longitude;
 	private double latitude;
-	private Date timestamp;
+	private long timestamp;
 	private String noteType;
 
 	
@@ -28,7 +26,7 @@ public abstract class Notes {
 		setUID("");
 		setLongitude(0);
 		setLatitude(0);
-		setTimestamp(null);
+		setTimestamp(0);
 	}
 	
 	//*********************
@@ -59,11 +57,11 @@ public abstract class Notes {
 		UID = uID;
 	}
 
-	public Date getTimestamp() {
+	public long getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(Date timestamp) {
+	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
 	

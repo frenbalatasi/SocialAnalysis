@@ -1,6 +1,8 @@
 package at.ac.uniklu.crosmos.socialanalysis.gui;
 
 import java.util.ArrayList;
+import java.util.Date;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -94,6 +96,7 @@ public class MainActivity extends Activity {
 		nAdapter.setData(notesList);
 		nAdapter.notifyDataSetChanged();
 		listView.setAdapter(nAdapter);
+		listView.setItemsCanFocus(true);
 		
 	    // Spinner selection box for selection of the type of notes
 		spAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, noteType);
@@ -119,14 +122,15 @@ public class MainActivity extends Activity {
 	protected void onResume() {
 	    super.onResume();
 	    
-	    // Every time that the app is activated, check if the location service is enabled
-	    // If not, show the AlertDialog to drag the user.
+	    // Every time that the app is activated, check if the 
+	    // location service is enabled. If not, show the 
+	    // AlertDialog to drag the user.
 	    checkIfLocationServiceIsActivated();
 	    
 	    // Request location updates from each provider, which is available in every 5 seconds and 1 meter
-	    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 1, locationListener);
-	    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1, locationListener);
-	    locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 5000, 1, locationListener);
+	    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 1, locationListener);
+	    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 1, locationListener);
+	    locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 10000, 1, locationListener);
 	    
 	    // EditText field at the bottom of activity, which has no focus in the beginning
  		editTextBottom.setCursorVisible(false);
@@ -208,7 +212,7 @@ public class MainActivity extends Activity {
 		editTextBottom.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 		    @Override
 		    public void onFocusChange(View v, boolean hasFocus) {
-		        if (hasFocus) {
+		    	if (hasFocus) {
 		        	showSoftKeyboard(editTextBottom);
 		        }
 		        else {
@@ -226,6 +230,7 @@ public class MainActivity extends Activity {
             		newTxtNote.setText(editTextBottom.getText().toString());
             		newTxtNote.setLongitude(longitude);
             		newTxtNote.setLatitude(latitude);
+            		newTxtNote.setTimestamp(new Date().getTime());
             		notesList.add(newTxtNote);
             		
             		editTextBottom.setText("");
@@ -248,6 +253,7 @@ public class MainActivity extends Activity {
             	listView.setFocusableInTouchMode(false);
             	
             	nAdapter.notifyDataSetChanged();
+            	
             	addNoteToServer();
             }
             
@@ -260,7 +266,6 @@ public class MainActivity extends Activity {
 				editTextBottom.setCursorVisible(true);
 				editTextBottom.setFocusable(true);
 				editTextBottom.setFocusableInTouchMode(true);
-				
 			}
 	    });
 		
@@ -328,8 +333,8 @@ public class MainActivity extends Activity {
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 			alertDialogBuilder.setTitle("Warning!");	 
 			alertDialogBuilder.setMessage("In order to use our services, we kindly ask you to enable location services. " +
-					"You will be re-directed to Location Settings of your smartphone, when you click OK below. You cannot use our services " +
-					"without activating location services of your smartphone.");
+					"You will be re-directed to Location Settings of your smartphone, when you click OK below. You cannot " +
+					"use our services without activating location services of your smartphone.");
 			alertDialogBuilder.setCancelable(false);
 			alertDialogBuilder.setPositiveButton("OK",new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog,int id) {

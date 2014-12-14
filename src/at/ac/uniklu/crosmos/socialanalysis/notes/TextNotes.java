@@ -7,7 +7,6 @@ public class TextNotes extends Notes {
 	//*********************************
 	
 	private String text;
-	final private Boolean isEditable = true;
 	
 	/** Constructor */
 	public TextNotes() {
@@ -22,9 +21,5 @@ public class TextNotes extends Notes {
 
 	public void setText(String text) {
 		this.text = text;
-	}
-	
-	public Boolean isEditable() {
-		return isEditable;
 	}
 }
