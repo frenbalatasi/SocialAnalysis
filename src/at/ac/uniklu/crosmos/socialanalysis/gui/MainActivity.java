@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
 	//**************************************************
 	// Other global variables, which are specific to GUI
 	//**************************************************
-	private String[] noteType = {"Type>","Audio>","Video>"};
+	private String[] noteTypes = Notes.typesOfNotes();
 	private int positionOfSpinner = 0;
 
 	@Override
@@ -94,12 +94,10 @@ public class MainActivity extends Activity {
 		// The list of notes, which are kept in the ListView
 		nAdapter = new NotesListAdapter(this);
 		nAdapter.setData(notesList);
-		nAdapter.notifyDataSetChanged();
 		listView.setAdapter(nAdapter);
-		listView.setItemsCanFocus(true);
 		
 	    // Spinner selection box for selection of the type of notes
-		spAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, noteType);
+		spAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, noteTypes);
 	    spinner.setAdapter(spAdapter);
     	
 	    // Location services registration and obtaining the last known location
@@ -115,7 +113,6 @@ public class MainActivity extends Activity {
     	if (lastKnownLocation != null) {
     	      locationListener.onLocationChanged(lastKnownLocation);
     	} 
-
 	}
 	
 	@Override
@@ -137,6 +134,8 @@ public class MainActivity extends Activity {
  		editTextBottom.setFocusable(false);
  	    editTextBottom.setFocusableInTouchMode(false);
  	    
+ 	    nAdapter.notifyDataSetChanged();
+ 	    
 	}
 	
 	@Override
@@ -157,7 +156,28 @@ public class MainActivity extends Activity {
 		// Destroy the ArrayList of Notes
 		notesList.clear();
 	}
+	
+	@Override
+	public void onBackPressed() {
+	    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+		alertDialogBuilder.setTitle(R.string.warning);	 
+		alertDialogBuilder.setMessage(R.string.textQuit);
+		alertDialogBuilder.setCancelable(false);
+		alertDialogBuilder.setNegativeButton(R.string.ok,new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog,int id) {
+					MainActivity.super.onBackPressed();
+				}
+		});
+		
+		alertDialogBuilder.setPositiveButton(R.string.cancel,new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog,int id) {
+				dialog.cancel();
+			}
+		});
 
+		AlertDialog alertDialog = alertDialogBuilder.create();
+		alertDialog.show();
+	}
 
 	@Override
 	protected void onPause() {
@@ -186,9 +206,27 @@ public class MainActivity extends Activity {
 		nAdapter.setRemoveButtonClickListener(new NotesListAdapter.OnRemoveButtonClickListener() {			
 			@Override
 			public void onRemoveButtonClick(int position) {
-				notesList.remove(position);
-				nAdapter.notifyDataSetChanged();
-				removeNoteFromServer();
+				final int pos = position;
+				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+				alertDialogBuilder.setTitle(R.string.warning);	 
+				alertDialogBuilder.setMessage(R.string.textDelete);
+				alertDialogBuilder.setCancelable(false);
+				alertDialogBuilder.setNegativeButton(R.string.ok,new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog,int id) {
+							notesList.remove(pos);
+							nAdapter.notifyDataSetChanged();
+							removeNoteFromServer();
+						}
+				});
+				
+				alertDialogBuilder.setPositiveButton(R.string.cancel,new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog,int id) {
+						dialog.cancel();
+					}
+				});
+
+				AlertDialog alertDialog = alertDialogBuilder.create();
+				alertDialog.show();
 			}
 		});
 		
@@ -331,18 +369,16 @@ public class MainActivity extends Activity {
     	boolean enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 		if (!enabled) {
 			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-			alertDialogBuilder.setTitle("Warning!");	 
-			alertDialogBuilder.setMessage("In order to use our services, we kindly ask you to enable location services. " +
-					"You will be re-directed to Location Settings of your smartphone, when you click OK below. You cannot " +
-					"use our services without activating location services of your smartphone.");
+			alertDialogBuilder.setTitle(R.string.warning);	 
+			alertDialogBuilder.setMessage(R.string.textWarning);
 			alertDialogBuilder.setCancelable(false);
-			alertDialogBuilder.setPositiveButton("OK",new DialogInterface.OnClickListener() {
+			alertDialogBuilder.setPositiveButton(R.string.ok,new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog,int id) {
 						Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
 						startActivity(intent);
 					}
 			});				
-			
+
 			AlertDialog alertDialog = alertDialogBuilder.create();
 			alertDialog.show();
 		}

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"        
         android:layout_centerInParent="true"
         android:layout_alignParentRight="true"
-        android:src="@drawable/remove"  />
+        android:src="@drawable/remove"/>
     
     <TextView
         android:id="@+id/textNotes"
@@ -22,8 +22,7 @@
         android:layout_alignBottom="@+id/buttonRemove"
         android:layout_alignParentLeft="true"
         android:textSize="24sp"
-        android:textColor="#FFFFFF"
-        android:text="Lorem ipsum dolor"/>
+        android:textColor="#FFFFFF"/>
 
     <ImageView
         android:id="@+id/playButton"

@@ -19,7 +19,6 @@ public abstract class Notes {
 	private double latitude;
 	private long timestamp;
 	private String noteType;
-
 	
 	/** Constructor */
 	public Notes(){
@@ -72,5 +71,10 @@ public abstract class Notes {
 	
 	public String getNoteType(){
 		return noteType;
+	}
+	
+	public static String[] typesOfNotes() {
+		final String[] typesOfNotes = {"Type>","Audio>","Video>"};
+		return typesOfNotes;
 	}
 }

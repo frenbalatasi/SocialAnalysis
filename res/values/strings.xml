@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">SocialAnalysis</string>
+    <string name="app_name">Social Analysis</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
-
-    <string name="text_bluetooth_off">Bluetooth is Off</string>
-    <string name="text_bluetooth_on">Bluetooth is On</string>
     
-    <string name="text_enable">Enable</string>
-    <string name="text_disable">Disable</string>
+    <string name="warning">Warning!</string>
+    <string name="textWarning">In order to use our services, we kindly ask you to enable location services. 
+        You will be re-directed to Location Settings of your smartphone, when you click OK below. 
+        You cannot use our services without activating location services of your smartphone.</string>
+    <string name="textQuit">You are about to quit Social Analysis application. If you are sure, click OK below. 
+        Unsaved notes will be deleted forever. Click CANCEL below to cancel quitting.</string>
+    <string name="textDelete">You are about to delete the note from the server. If you are sure, click OK below.
+        Deleting cannot be undone. Click CANCEL below to cancel deleting.</string>  
     
-    <string name="text_view_paired">Paired Devices</string>
-    <string name="text_scan_devices">Scan Devices</string>
-    <string name="text_stop_scan">Scan Devices</string>
-    
-    <string name="text_list_paired_devices">Paired Devices</string>
-    <string name="text_list_devices">List of Devices</string>
-    
-    <string name="text_pair">Pair</string>
+    <string name="send">Send</string>
+    <string name="ok">OK</string>
+    <string name="cancel">CANCEL</string>
     
 </resources>
