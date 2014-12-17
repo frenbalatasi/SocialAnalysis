@@ -135,7 +135,6 @@ public class MainActivity extends Activity {
  	    editTextBottom.setFocusableInTouchMode(false);
  	    
  	    nAdapter.notifyDataSetChanged();
- 	    
 	}
 	
 	@Override
@@ -360,7 +359,7 @@ public class MainActivity extends Activity {
 	}
 	
 	/** Checking if the location services are enabled or not. 
-	 *  If no, then drag the user the location settings menu.
+	 *  If no, then drag the user to the location settings menu of the device.
 	 *  @return void
 	 **/
 	private void checkIfLocationServiceIsActivated() {
