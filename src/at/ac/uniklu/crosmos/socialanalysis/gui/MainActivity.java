@@ -2,6 +2,11 @@ package at.ac.uniklu.crosmos.socialanalysis.gui;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
+import com.google.common.collect.ImmutableMap;
+import com.strongloop.android.loopback.*;
+import com.strongloop.android.loopback.callbacks.VoidCallback;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -15,6 +20,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -36,6 +42,7 @@ import at.ac.uniklu.crosmos.socialanalysis.R;
 import at.ac.uniklu.crosmos.socialanalysis.notes.AudioNotes;
 import at.ac.uniklu.crosmos.socialanalysis.notes.Notes;
 import at.ac.uniklu.crosmos.socialanalysis.notes.TextNotes;
+import at.ac.uniklu.crosmos.socialanalysis.notes.TextNotesModel;
 import at.ac.uniklu.crosmos.socialanalysis.notes.VideoNotes;
 
 /** Main activity for the SocialAnalysis app.
@@ -113,6 +120,7 @@ public class MainActivity extends Activity {
     	if (lastKnownLocation != null) {
     	      locationListener.onLocationChanged(lastKnownLocation);
     	} 
+
 	}
 	
 	@Override
@@ -135,7 +143,30 @@ public class MainActivity extends Activity {
  	    editTextBottom.setFocusableInTouchMode(false);
  	    
  	    nAdapter.notifyDataSetChanged();
+ 	    
+ 	    RestAdapter adapter = new RestAdapter(getApplicationContext(), "http://0.0.0.0:3000");
+		ModelRepository<TextNotesModel> exampleRepository = adapter.createRepository(ExampleRepository.class);
+
+		TextNotesModel exampleTwo = exampleRepository.createObject(ImmutableMap.of("text", "exampleTwos"));
+		exampleTwo.setText("amk");
+		exampleTwo.save(new Model.Callback() {
+		    @Override
+		    public void onSuccess() {
+		        // Pencil now exists on the server!
+		    }
+		 
+		    @Override
+		    public void onError(Throwable t) {
+		    	showAsToast("Failed!");
+		    }
+		});
 	}
+	
+	public static class ExampleRepository extends ModelRepository<TextNotesModel> {
+        public ExampleRepository() {
+            super("exampleTwos", TextNotesModel.class);
+        }
+    }
 	
 	@Override
 	protected void onStop() {

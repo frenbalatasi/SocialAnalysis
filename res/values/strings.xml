@@ -8,10 +8,8 @@
     <string name="textWarning">In order to use our services, we kindly ask you to enable location services. 
         You will be re-directed to Location Settings of your smartphone, when you click OK below. 
         You cannot use our services without activating location services of your smartphone.</string>
-    <string name="textQuit">You are about to quit Social Analysis application. If you are sure, click OK below. 
-        Unsaved notes will be deleted forever. Click CANCEL below to cancel quitting.</string>
-    <string name="textDelete">You are about to delete the note from the server. If you are sure, click OK below.
-        Deleting cannot be undone. Click CANCEL below to cancel deleting.</string>  
+    <string name="textQuit">You are about to quit Social Analysis application.</string>
+    <string name="textDelete">You are about to delete the note from the server.</string>  
     
     <string name="send">Send</string>
     <string name="ok">OK</string>
