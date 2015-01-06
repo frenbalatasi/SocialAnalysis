@@ -144,12 +144,11 @@ public class MainActivity extends Activity {
  	    
  	    nAdapter.notifyDataSetChanged();
  	    
- 	    RestAdapter adapter = new RestAdapter(getApplicationContext(), "http://0.0.0.0:3000");
-		ModelRepository<TextNotesModel> exampleRepository = adapter.createRepository(ExampleRepository.class);
+ 	    RestAdapter adapter = new RestAdapter(getApplicationContext(), "http://192.168.0.100:3000");
+		ModelRepository<Model> exampleRepository = adapter.createRepository("product");
+		Model pencil = exampleRepository.createObject(ImmutableMap.of("name", "Awesome Pencil"));
 
-		TextNotesModel exampleTwo = exampleRepository.createObject(ImmutableMap.of("text", "exampleTwos"));
-		exampleTwo.setText("amk");
-		exampleTwo.save(new Model.Callback() {
+		pencil.save(new VoidCallback() {
 		    @Override
 		    public void onSuccess() {
 		        // Pencil now exists on the server!
@@ -162,11 +161,11 @@ public class MainActivity extends Activity {
 		});
 	}
 	
-	public static class ExampleRepository extends ModelRepository<TextNotesModel> {
-        public ExampleRepository() {
-            super("exampleTwos", TextNotesModel.class);
-        }
-    }
+//	public static class ExampleRepository extends ModelRepository<TextNotesModel> {
+//        public ExampleRepository() {
+//            super("example", TextNotesModel.class);
+//        }
+//    }
 	
 	@Override
 	protected void onStop() {
