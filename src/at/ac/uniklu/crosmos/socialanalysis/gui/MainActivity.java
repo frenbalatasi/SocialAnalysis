@@ -3,6 +3,7 @@ package at.ac.uniklu.crosmos.socialanalysis.gui;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 import com.strongloop.android.loopback.*;
@@ -20,6 +21,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.provider.Settings;
+import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,11 +40,11 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import at.ac.uniklu.crosmos.socialanalysis.R;
 import at.ac.uniklu.crosmos.socialanalysis.notes.AudioNotes;
 import at.ac.uniklu.crosmos.socialanalysis.notes.Notes;
 import at.ac.uniklu.crosmos.socialanalysis.notes.TextNotes;
-import at.ac.uniklu.crosmos.socialanalysis.notes.TextNotesModel;
 import at.ac.uniklu.crosmos.socialanalysis.notes.VideoNotes;
 
 /** Main activity for the SocialAnalysis app.
@@ -68,7 +70,7 @@ public class MainActivity extends Activity {
 	//***************************
 	private NotesListAdapter nAdapter;
 	private ArrayAdapter<String> spAdapter;
-	private ArrayList<Notes> notesList;
+	private List<Notes> notesList;
 	
 	//***************************
 	// Location-related variables
@@ -84,7 +86,20 @@ public class MainActivity extends Activity {
 	//**************************************************
 	private String[] noteTypes = Notes.typesOfNotes();
 	private int positionOfSpinner = 0;
-
+	
+	//**************************
+	// Server-related variables
+	//**************************
+	private TextNotesRepository repository;
+	private RestAdapter adapter;
+	
+	//*****************************************************
+	// Unique ID for the device, which app is installed.
+	// Since app is compatible starting from Android 4.2.2,
+	// using unique ID as ANDROID_ID is not a problem.
+	//*****************************************************
+	private String androidID;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -119,13 +134,23 @@ public class MainActivity extends Activity {
     	// in order to save some time while obtaining the current location information
     	if (lastKnownLocation != null) {
     	      locationListener.onLocationChanged(lastKnownLocation);
-    	} 
+    	}
+    	
+    	// Grab the RestAdapter instance.
+	 	adapter = new RestAdapter(getApplicationContext(), "http://192.168.0.100:3000/api");
 
+	    // Instantiate our repository for text notes.
+	 	repository = adapter.createRepository(TextNotesRepository.class);
+	 	
+	 	// ANDROID_ID
+	 	androidID = Settings.Secure.getString(getContentResolver(),Settings.Secure.ANDROID_ID);
 	}
 	
 	@Override
 	protected void onResume() {
 	    super.onResume();
+	    
+	    retrieveFromServer();
 	    
 	    // Every time that the app is activated, check if the 
 	    // location service is enabled. If not, show the 
@@ -143,29 +168,14 @@ public class MainActivity extends Activity {
  	    editTextBottom.setFocusableInTouchMode(false);
  	    
  	    nAdapter.notifyDataSetChanged();
- 	    
- 	    RestAdapter adapter = new RestAdapter(getApplicationContext(), "http://192.168.0.100:3000");
-		ModelRepository<Model> exampleRepository = adapter.createRepository("product");
-		Model pencil = exampleRepository.createObject(ImmutableMap.of("name", "Awesome Pencil"));
-
-		pencil.save(new VoidCallback() {
-		    @Override
-		    public void onSuccess() {
-		        // Pencil now exists on the server!
-		    }
-		 
-		    @Override
-		    public void onError(Throwable t) {
-		    	showAsToast("Failed!");
-		    }
-		});
 	}
+
+	public static class TextNotesRepository extends ModelRepository<TextNotes> {
+        public TextNotesRepository() {
+            super("note", TextNotes.class);
+        }
+    }
 	
-//	public static class ExampleRepository extends ModelRepository<TextNotesModel> {
-//        public ExampleRepository() {
-//            super("example", TextNotesModel.class);
-//        }
-//    }
 	
 	@Override
 	protected void onStop() {
@@ -225,6 +235,21 @@ public class MainActivity extends Activity {
 	private void removeNoteFromServer() {
 		
 	}
+	
+	/** Retrieve the existing notes from the server */
+	private void retrieveFromServer() {
+        repository.findAll(new ModelRepository.FindAllCallback<TextNotes>() {
+			@Override
+			public void onSuccess(List<TextNotes> textNotes) {
+				notesList.addAll((ArrayList<TextNotes>) textNotes);
+			}
+			
+			@Override
+            public void onError(Throwable t) {
+                showAsToast("Retrieval of notes failed!");
+            }
+        });
+    }
 	
 	/** Enabling all the listeners needed for the main activity.
 	 *  @return void
@@ -290,20 +315,45 @@ public class MainActivity extends Activity {
 		
 		// ClickListener for Send Button
 		buttonSend.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
+            @SuppressWarnings("deprecation")
+			public void onClick(View v) {
             	
             	if(positionOfSpinner == 0) {
             		TextNotes newTxtNote = new TextNotes();
+            		
             		newTxtNote.setText(editTextBottom.getText().toString());
             		newTxtNote.setLongitude(longitude);
             		newTxtNote.setLatitude(latitude);
             		newTxtNote.setTimestamp(new Date().getTime());
-            		notesList.add(newTxtNote);
+            		newTxtNote.setDeviceID(androidID);
+            		
+            		Map<String,?> parameters = ImmutableMap.of(
+                            "text", newTxtNote.getText(),
+                            "latitude", newTxtNote.getLatitude(),
+                            "longitude",newTxtNote.getLongitude(),
+                            "timestamp",new Date().getTime(),
+                            "deviceID", newTxtNote.getDeviceID());
+            		
+            		newTxtNote = repository.createModel(parameters);
+            		
+            		newTxtNote.save(new Model.Callback() {
+            		    @Override
+            		    public void onSuccess() {
+            		        // Pencil now exists on the server!
+            		    }
+            		 
+            		    @Override
+            		    public void onError(Throwable t) {
+            		        showAsToast("Saving failed!");
+            		    }
+            		});
             		
             		editTextBottom.setText("");
                 	editTextBottom.setCursorVisible(false);
                 	editTextBottom.setFocusable(false);
                 	editTextBottom.setFocusableInTouchMode(false);
+                	
+                	notesList.add(newTxtNote);
             	}
             	
             	else if(positionOfSpinner == 1) {

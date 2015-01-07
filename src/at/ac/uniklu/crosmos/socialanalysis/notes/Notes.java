@@ -1,5 +1,7 @@
 package at.ac.uniklu.crosmos.socialanalysis.notes;
 
+import com.strongloop.android.loopback.Model;
+
 /** Notes class, which is the parent class to be the reference to
  *  its child classes: TextNotes, VideoNotes, AudioNotes. It's an abstract
  *  class where it holds the common attributes of the notes such as location
@@ -9,29 +11,39 @@ package at.ac.uniklu.crosmos.socialanalysis.notes;
  *  @version 1.0
  */
 
-public abstract class Notes {
+public class Notes extends Model {
 	
 	//*********************
 	// Attributes of Notes
 	//*********************
-	private String UID;
+	private String noteID;
 	private double longitude;
 	private double latitude;
 	private long timestamp;
+	private String deviceID;
 	private String noteType;
 	
 	/** Constructor */
 	public Notes(){
-		setUID("");
+		setNoteID("");
 		setLongitude(0);
 		setLatitude(0);
 		setTimestamp(0);
+		setDeviceID("");
 	}
 	
 	//*********************
 	// Setters and Getters
 	//*********************
 
+	public String getNoteID() {
+		return noteID;
+	}
+
+	public void setNoteID(String noteID) {
+		this.noteID = noteID;
+	}
+	
 	public double getLongitude() {
 		return longitude;
 	}
@@ -48,14 +60,6 @@ public abstract class Notes {
 		this.latitude = latitude;
 	}
 
-	public String getUID() {
-		return UID;
-	}
-
-	public void setUID(String uID) {
-		UID = uID;
-	}
-
 	public long getTimestamp() {
 		return timestamp;
 	}
@@ -64,6 +68,14 @@ public abstract class Notes {
 		this.timestamp = timestamp;
 	}
 	
+	public String getDeviceID() {
+		return deviceID;
+	}
+
+	public void setDeviceID(String deviceID) {
+		this.deviceID = deviceID;
+	}
+
 	protected void setNoteType(String noteType)
 	{
 		this.noteType = noteType;

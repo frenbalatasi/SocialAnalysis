@@ -1,6 +1,6 @@
 package at.ac.uniklu.crosmos.socialanalysis.gui;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import at.ac.uniklu.crosmos.socialanalysis.R;
 import at.ac.uniklu.crosmos.socialanalysis.notes.Notes;
@@ -37,7 +37,7 @@ public class NotesListAdapter extends BaseAdapter{
 	// when the user takes a note
 	//************************************
 	private LayoutInflater mInflater;	
-	private ArrayList<Notes> notesList;
+	private List<Notes> notesList;
 	private OnRemoveButtonClickListener rbListener;
 	private OnTextViewClickListener etListener;
 	private OnImageViewClickListener pbListener;
@@ -48,10 +48,10 @@ public class NotesListAdapter extends BaseAdapter{
     }
 	
 	/** Setting the list of notes for the first time 
-	 *  @param notes The ArrayList of Notes class
+	 *  @param notes The List of Notes class
 	 *  @return void
 	 **/
-	public void setData(ArrayList<Notes> notes) {
+	public void setData(List<Notes> notes) {
 		notesList = notes;
 	}
 	
