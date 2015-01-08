@@ -1,5 +1,6 @@
 package at.ac.uniklu.crosmos.socialanalysis.gui;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -11,6 +12,7 @@ import com.strongloop.android.loopback.callbacks.VoidCallback;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,7 +20,10 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.EditTextPreference;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
@@ -64,6 +69,7 @@ public class MainActivity extends Activity {
 	private EditText editTextBottom;
 	private ImageView imageView;
 	private ListView listView;
+	private ProgressDialog progressDlg;
 	
 	//***************************
 	// Notes-related variables
@@ -112,6 +118,10 @@ public class MainActivity extends Activity {
 		listView = (ListView)findViewById(R.id.listViewNotes);
 		buttonSend = (Button)findViewById(R.id.buttonSend);
 		notesList = new ArrayList<Notes>();
+		progressDlg = new ProgressDialog(MainActivity.this);
+		
+		progressDlg.setMessage("Connecting...");
+		progressDlg.setCancelable(false);
 		
 		// The list of notes, which are kept in the ListView
 		nAdapter = new NotesListAdapter(this);
@@ -127,8 +137,7 @@ public class MainActivity extends Activity {
 	    locationProvider = locationManager.getBestProvider(new Criteria(), false);
 	    Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
 	    
-	    // Toggling the listeners needed for the main activity
-    	toggleListeners();
+	    
     	
     	// If last location is known, then update the location information with that
     	// in order to save some time while obtaining the current location information
@@ -136,12 +145,12 @@ public class MainActivity extends Activity {
     	      locationListener.onLocationChanged(lastKnownLocation);
     	}
     	
-    	// Grab the RestAdapter instance.
+    	 // Grab the RestAdapter instance.
 	 	adapter = new RestAdapter(getApplicationContext(), "http://192.168.0.100:3000/api");
 
 	    // Instantiate our repository for text notes.
 	 	repository = adapter.createRepository(TextNotesRepository.class);
-	 	
+    	
 	 	// ANDROID_ID
 	 	androidID = Settings.Secure.getString(getContentResolver(),Settings.Secure.ANDROID_ID);
 	}
@@ -150,7 +159,15 @@ public class MainActivity extends Activity {
 	protected void onResume() {
 	    super.onResume();
 	    
-	    retrieveFromServer();
+	    // Toggling the listeners needed for the main activity
+    	toggleListeners();
+	    
+	    // Clear the elements of ListView for each time that app starts
+	    notesList.clear();
+	    
+	    // Show the progress dialog and start to retrieve the notes from server
+	    progressDlg.show();
+	    retrieveNotesFromServer();
 	    
 	    // Every time that the app is activated, check if the 
 	    // location service is enabled. If not, show the 
@@ -166,16 +183,8 @@ public class MainActivity extends Activity {
  		editTextBottom.setCursorVisible(false);
  		editTextBottom.setFocusable(false);
  	    editTextBottom.setFocusableInTouchMode(false);
- 	    
- 	    nAdapter.notifyDataSetChanged();
+ 	    listView.setSelection(listView.getAdapter().getCount()-1);
 	}
-
-	public static class TextNotesRepository extends ModelRepository<TextNotes> {
-        public TextNotesRepository() {
-            super("note", TextNotes.class);
-        }
-    }
-	
 	
 	@Override
 	protected void onStop() {
@@ -183,6 +192,9 @@ public class MainActivity extends Activity {
 		
 		// Stop getting location updates when the user has no focus on the app
 		locationManager.removeUpdates(locationListener);
+		
+		// Disable the listeners
+	    disableListeners();
 	}
 	
 	@Override
@@ -192,13 +204,18 @@ public class MainActivity extends Activity {
 		// Stop getting location updates when the app finally is destroyed
 		locationManager.removeUpdates(locationListener);
 		
-		// Destroy the ArrayList of Notes
-		notesList.clear();
+		// Disable the listeners
+	    disableListeners();
+	    
+	    // Destroy the ArrayList of Notes
+	 	notesList.clear();
 	}
 	
 	@Override
 	public void onBackPressed() {
-	    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+	    
+		// AlertDialog before quitting the app
+		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 		alertDialogBuilder.setTitle(R.string.warning);	 
 		alertDialogBuilder.setMessage(R.string.textQuit);
 		alertDialogBuilder.setCancelable(false);
@@ -224,6 +241,9 @@ public class MainActivity extends Activity {
 	    
 	    // Stop getting location updates when the user has no focus on the app
 	    locationManager.removeUpdates(locationListener);
+	    
+	    // Disable the listeners
+	    disableListeners();
 	}
 	
 	/** Add the related note to the server */
@@ -236,20 +256,38 @@ public class MainActivity extends Activity {
 		
 	}
 	
+	/** Repository class for TextNotes */
+	public static class TextNotesRepository extends ModelRepository<TextNotes> {
+        public TextNotesRepository() {
+            super("note", TextNotes.class);
+        }
+    }
+	
 	/** Retrieve the existing notes from the server */
-	private void retrieveFromServer() {
-        repository.findAll(new ModelRepository.FindAllCallback<TextNotes>() {
+	private void retrieveNotesFromServer() {
+		repository.findAll(new ModelRepository.FindAllCallback<TextNotes>() {
 			@Override
 			public void onSuccess(List<TextNotes> textNotes) {
+				progressDlg.dismiss();
 				notesList.addAll((ArrayList<TextNotes>) textNotes);
+				nAdapter.notifyDataSetChanged();
 			}
 			
 			@Override
             public void onError(Throwable t) {
-                showAsToast("Retrieval of notes failed!");
+				progressDlg.dismiss();
+                showAsToast("Notes couldn't be retrieved.");
+                showAsToast("Check your network connection...");
             }
         });
     }
+	
+	/** Disabling all the listeners needed for the main activity.
+	 *  @return void
+	 **/
+	private void disableListeners() {
+		
+	}
 	
 	/** Enabling all the listeners needed for the main activity.
 	 *  @return void
@@ -267,6 +305,18 @@ public class MainActivity extends Activity {
 				alertDialogBuilder.setCancelable(false);
 				alertDialogBuilder.setNegativeButton(R.string.ok,new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog,int id) {
+							TextNotes noteToBeDeleted = (TextNotes) notesList.get(pos);
+							noteToBeDeleted.destroy(new Model.Callback() {
+							    @Override
+							    public void onSuccess() {
+							    }
+							 
+							    @Override
+							    public void onError(Throwable t) {
+							    	showAsToast("Note couldn't be deleted.");
+							    	showAsToast("Check your network connection...");
+							    }
+							});
 							notesList.remove(pos);
 							nAdapter.notifyDataSetChanged();
 							removeNoteFromServer();
@@ -318,10 +368,13 @@ public class MainActivity extends Activity {
             @SuppressWarnings("deprecation")
 			public void onClick(View v) {
             	
-            	if(positionOfSpinner == 0) {
+            	// If TextNote is chosen
+            	if(positionOfSpinner == 0) {	
             		TextNotes newTxtNote = new TextNotes();
             		
-            		newTxtNote.setText(editTextBottom.getText().toString());
+            		String txtNoteTxt = editTextBottom.getText().toString();
+            		
+            		newTxtNote.setText(txtNoteTxt);
             		newTxtNote.setLongitude(longitude);
             		newTxtNote.setLatitude(latitude);
             		newTxtNote.setTimestamp(new Date().getTime());
@@ -339,12 +392,13 @@ public class MainActivity extends Activity {
             		newTxtNote.save(new Model.Callback() {
             		    @Override
             		    public void onSuccess() {
-            		        // Pencil now exists on the server!
+            		        // TextNote now exists on the server!
             		    }
             		 
             		    @Override
             		    public void onError(Throwable t) {
-            		        showAsToast("Saving failed!");
+            		        showAsToast("You cannot send an empty note.");
+            		        showAsToast("Please write something before sending!");
             		    }
             		});
             		
@@ -353,14 +407,18 @@ public class MainActivity extends Activity {
                 	editTextBottom.setFocusable(false);
                 	editTextBottom.setFocusableInTouchMode(false);
                 	
-                	notesList.add(newTxtNote);
+                	if(!(txtNoteTxt.isEmpty())) {
+                		notesList.add(newTxtNote);
+                	}
             	}
             	
+            	// If AudioNote is chosen
             	else if(positionOfSpinner == 1) {
             		AudioNotes newAudioNote = new AudioNotes();
             		notesList.add(newAudioNote);
             	}
             	
+            	// If VideoNote is chosen
             	else if(positionOfSpinner == 2) {
             		VideoNotes newVideoNote = new VideoNotes();
             		notesList.add(newVideoNote);
@@ -427,7 +485,7 @@ public class MainActivity extends Activity {
 		    public void onLocationChanged(Location location) {
 		    	latitude = location.getLatitude();
 		    	longitude = location.getLongitude();
-		    	showAsToast("Longitude: "+longitude+"\nLatitude: "+latitude);
+//		    	showAsToast("Longitude: "+longitude+"\nLatitude: "+latitude);
 		    }
 		    public void onStatusChanged(String provider, int status, Bundle extras) {}
 
