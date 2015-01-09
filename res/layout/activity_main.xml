@@ -16,8 +16,7 @@
         android:layout_alignParentTop="true"
         android:cacheColorHint="#00000000" 
         android:listSelector="@android:color/transparent"
-		android:transcriptMode="alwaysScroll"
-		android:stackFromBottom="true"/>
+        android:stackFromBottom="true"/>
 
     <Button
         android:id="@+id/buttonSend"
@@ -34,7 +33,9 @@
         android:layout_alignBottom="@+id/buttonSend"
         android:layout_toLeftOf="@+id/buttonSend"
         android:layout_toRightOf="@+id/spinnerBottom"
-        android:textColor="#FFFFFF"/>
+        android:textColor="#FFFFFF"
+        android:inputType="textMultiLine"
+        android:maxLines="2"/>
 
     <Spinner
         android:id="@+id/spinnerBottom"

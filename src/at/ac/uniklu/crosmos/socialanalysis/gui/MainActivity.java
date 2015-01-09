@@ -77,6 +77,7 @@ public class MainActivity extends Activity {
 	private NotesListAdapter nAdapter;
 	private ArrayAdapter<String> spAdapter;
 	private List<Notes> notesList;
+	private TextNotes newTxtNote;
 	
 	//***************************
 	// Location-related variables
@@ -92,6 +93,7 @@ public class MainActivity extends Activity {
 	//**************************************************
 	private String[] noteTypes = Notes.typesOfNotes();
 	private int positionOfSpinner = 0;
+	private Boolean sendingFailed;
 	
 	//**************************
 	// Server-related variables
@@ -127,6 +129,7 @@ public class MainActivity extends Activity {
 		nAdapter = new NotesListAdapter(this);
 		nAdapter.setData(notesList);
 		listView.setAdapter(nAdapter);
+		nAdapter.notifyDataSetChanged();
 		
 	    // Spinner selection box for selection of the type of notes
 		spAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, noteTypes);
@@ -137,8 +140,6 @@ public class MainActivity extends Activity {
 	    locationProvider = locationManager.getBestProvider(new Criteria(), false);
 	    Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
 	    
-	    
-    	
     	// If last location is known, then update the location information with that
     	// in order to save some time while obtaining the current location information
     	if (lastKnownLocation != null) {
@@ -183,7 +184,8 @@ public class MainActivity extends Activity {
  		editTextBottom.setCursorVisible(false);
  		editTextBottom.setFocusable(false);
  	    editTextBottom.setFocusableInTouchMode(false);
- 	    listView.setSelection(listView.getAdapter().getCount()-1);
+ 	    
+ 	    listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
 	}
 	
 	@Override
@@ -206,9 +208,6 @@ public class MainActivity extends Activity {
 		
 		// Disable the listeners
 	    disableListeners();
-	    
-	    // Destroy the ArrayList of Notes
-	 	notesList.clear();
 	}
 	
 	@Override
@@ -246,6 +245,37 @@ public class MainActivity extends Activity {
 	    disableListeners();
 	}
 	
+	//***************************************************************************
+	//***************************************************************************
+	// TO-DO
+	// Settings in the upper-right corner
+	//***************************************************************************
+	//***************************************************************************
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+	//***************************************************************************
+	//***************************************************************************
+	// TO-DO
+	// Settings in the upper-right corner
+	//***************************************************************************
+	//***************************************************************************
+
 	/** Add the related note to the server */
 	private void addNoteToServer() {
 		
@@ -269,6 +299,11 @@ public class MainActivity extends Activity {
 			@Override
 			public void onSuccess(List<TextNotes> textNotes) {
 				progressDlg.dismiss();
+				
+				for(int i=0;i<textNotes.size();i++){
+					textNotes.get(i).setSuccessfullySent(true);
+				}
+					
 				notesList.addAll((ArrayList<TextNotes>) textNotes);
 				nAdapter.notifyDataSetChanged();
 			}
@@ -276,8 +311,7 @@ public class MainActivity extends Activity {
 			@Override
             public void onError(Throwable t) {
 				progressDlg.dismiss();
-                showAsToast("Notes couldn't be retrieved.");
-                showAsToast("Check your network connection...");
+                showAsToast("Notes couldn't be retrieved!\nCheck your network connection...");
             }
         });
     }
@@ -298,6 +332,7 @@ public class MainActivity extends Activity {
 		nAdapter.setRemoveButtonClickListener(new NotesListAdapter.OnRemoveButtonClickListener() {			
 			@Override
 			public void onRemoveButtonClick(int position) {
+				listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_DISABLED);
 				final int pos = position;
 				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
 				alertDialogBuilder.setTitle(R.string.warning);	 
@@ -306,20 +341,24 @@ public class MainActivity extends Activity {
 				alertDialogBuilder.setNegativeButton(R.string.ok,new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog,int id) {
 							TextNotes noteToBeDeleted = (TextNotes) notesList.get(pos);
-							noteToBeDeleted.destroy(new Model.Callback() {
-							    @Override
-							    public void onSuccess() {
-							    }
-							 
-							    @Override
-							    public void onError(Throwable t) {
-							    	showAsToast("Note couldn't be deleted.");
-							    	showAsToast("Check your network connection...");
-							    }
-							});
-							notesList.remove(pos);
-							nAdapter.notifyDataSetChanged();
-							removeNoteFromServer();
+							
+							if(noteToBeDeleted.isSuccessfullySent()) {
+								noteToBeDeleted.destroy(new Model.Callback() {
+								    @Override
+								    public void onSuccess() {
+								    	notesList.remove(pos);
+										nAdapter.notifyDataSetChanged();
+								    }
+								    @Override
+								    public void onError(Throwable t) {
+								    	showAsToast("Deleting failed!\nCheck your network connection...");
+								    }
+								});
+							}
+							else {
+								notesList.remove(pos);
+								nAdapter.notifyDataSetChanged();
+							}
 						}
 				});
 				
@@ -338,7 +377,13 @@ public class MainActivity extends Activity {
 		nAdapter.setTextViewClickListener(new NotesListAdapter.OnTextViewClickListener() {			
 			@Override
 			public void onTextViewClick(int position) {
-				showAsToast("Position of note: "+(++position));
+				if(notesList.get(position).isSuccessfullySent()){
+					TextNotes txtNote = (TextNotes) notesList.get(position);
+					showAsToast(txtNote.getText());
+				}
+				else {
+					showAsToast("This note couldn't be sent!\nCheck your connection...");
+				}
 			}
 		});
 		
@@ -354,6 +399,8 @@ public class MainActivity extends Activity {
 		editTextBottom.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 		    @Override
 		    public void onFocusChange(View v, boolean hasFocus) {
+		    	listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+		    	
 		    	if (hasFocus) {
 		        	showSoftKeyboard(editTextBottom);
 		        }
@@ -365,51 +412,58 @@ public class MainActivity extends Activity {
 		
 		// ClickListener for Send Button
 		buttonSend.setOnClickListener(new View.OnClickListener() {
-            @SuppressWarnings("deprecation")
+			@SuppressWarnings("deprecation")
 			public void onClick(View v) {
+            	listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
             	
             	// If TextNote is chosen
             	if(positionOfSpinner == 0) {	
-            		TextNotes newTxtNote = new TextNotes();
-            		
             		String txtNoteTxt = editTextBottom.getText().toString();
             		
-            		newTxtNote.setText(txtNoteTxt);
-            		newTxtNote.setLongitude(longitude);
-            		newTxtNote.setLatitude(latitude);
-            		newTxtNote.setTimestamp(new Date().getTime());
-            		newTxtNote.setDeviceID(androidID);
+            		if(!(txtNoteTxt.isEmpty())) {
+            			newTxtNote = new TextNotes();
+                		newTxtNote.setText(txtNoteTxt);
+                		newTxtNote.setLongitude(longitude);
+                		newTxtNote.setLatitude(latitude);
+                		newTxtNote.setTimestamp(new Date().getTime());
+                		newTxtNote.setDeviceID(androidID);
+                		
+                		Map<String,?> parameters = ImmutableMap.of(
+                                "text", newTxtNote.getText(),
+                                "latitude", newTxtNote.getLatitude(),
+                                "longitude",newTxtNote.getLongitude(),
+                                "timestamp",newTxtNote.getTimestamp(),
+                                "deviceID", newTxtNote.getDeviceID());
+                		
+                		newTxtNote = repository.createModel(parameters);
+                		
+                		newTxtNote.save(new Model.Callback() {
+                		    @Override
+                		    public void onSuccess() {
+                		    	newTxtNote.setSuccessfullySent(true);
+                		    }
+                		 
+                		    @Override
+                		    public void onError(Throwable t) {
+                		    	newTxtNote.setText("WARNING!!! "+newTxtNote.getText());
+                		    	newTxtNote.setSuccessfullySent(false);
+                		    	nAdapter.notifyDataSetChanged();
+                		    	showAsToast("Sending failed!\nCheck your connection...");
+                		    }
+                		});
+                		
+                		notesList.add(newTxtNote);
+            		}
             		
-            		Map<String,?> parameters = ImmutableMap.of(
-                            "text", newTxtNote.getText(),
-                            "latitude", newTxtNote.getLatitude(),
-                            "longitude",newTxtNote.getLongitude(),
-                            "timestamp",new Date().getTime(),
-                            "deviceID", newTxtNote.getDeviceID());
-            		
-            		newTxtNote = repository.createModel(parameters);
-            		
-            		newTxtNote.save(new Model.Callback() {
-            		    @Override
-            		    public void onSuccess() {
-            		        // TextNote now exists on the server!
-            		    }
-            		 
-            		    @Override
-            		    public void onError(Throwable t) {
-            		        showAsToast("You cannot send an empty note.");
-            		        showAsToast("Please write something before sending!");
-            		    }
-            		});
+            		else {
+            			listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_DISABLED);
+            			showAsToast("Enter something to send.");
+            		}
             		
             		editTextBottom.setText("");
                 	editTextBottom.setCursorVisible(false);
                 	editTextBottom.setFocusable(false);
                 	editTextBottom.setFocusableInTouchMode(false);
-                	
-                	if(!(txtNoteTxt.isEmpty())) {
-                		notesList.add(newTxtNote);
-                	}
             	}
             	
             	// If AudioNote is chosen
@@ -423,13 +477,11 @@ public class MainActivity extends Activity {
             		VideoNotes newVideoNote = new VideoNotes();
             		notesList.add(newVideoNote);
             	}
-            
+            	
             	listView.setFocusable(false);
             	listView.setFocusableInTouchMode(false);
             	
             	nAdapter.notifyDataSetChanged();
-            	
-            	addNoteToServer();
             }
             
         });

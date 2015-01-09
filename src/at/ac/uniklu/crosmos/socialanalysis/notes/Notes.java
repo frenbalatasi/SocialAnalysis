@@ -16,7 +16,7 @@ public class Notes extends Model {
 	//*********************
 	// Attributes of Notes
 	//*********************
-	private String noteID;
+	private Boolean isSuccessfullySent;
 	private double longitude;
 	private double latitude;
 	private long timestamp;
@@ -25,7 +25,7 @@ public class Notes extends Model {
 	
 	/** Constructor */
 	public Notes(){
-		setNoteID("");
+		setSuccessfullySent(false);
 		setLongitude(0);
 		setLatitude(0);
 		setTimestamp(0);
@@ -35,15 +35,14 @@ public class Notes extends Model {
 	//*********************
 	// Setters and Getters
 	//*********************
-
-	public String getNoteID() {
-		return noteID;
+	public Boolean isSuccessfullySent() {
+		return isSuccessfullySent;
 	}
 
-	public void setNoteID(String noteID) {
-		this.noteID = noteID;
+	public void setSuccessfullySent(Boolean isSuccessfullySent) {
+		this.isSuccessfullySent = isSuccessfullySent;
 	}
-	
+
 	public double getLongitude() {
 		return longitude;
 	}
