@@ -9,7 +9,8 @@
         You will be re-directed to Location Settings of your smartphone, when you click OK below. 
         You cannot use our services without activating location services of your smartphone.</string>
     <string name="textQuit">You are about to quit Social Analysis application.</string>
-    <string name="textDelete">You are about to delete the note from the server.</string>  
+    <string name="textDelete">You are about to delete this note:</string>
+      
     
     <string name="send">Send</string>
     <string name="ok">OK</string>

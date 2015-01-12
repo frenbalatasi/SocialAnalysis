@@ -166,8 +166,7 @@ public class MainActivity extends Activity {
 	    // Clear the elements of ListView for each time that app starts
 	    notesList.clear();
 	    
-	    // Show the progress dialog and start to retrieve the notes from server
-	    progressDlg.show();
+	    // Start to retrieve the notes from server
 	    retrieveNotesFromServer();
 	    
 	    // Every time that the app is activated, check if the 
@@ -212,19 +211,18 @@ public class MainActivity extends Activity {
 	
 	@Override
 	public void onBackPressed() {
-	    
 		// AlertDialog before quitting the app
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 		alertDialogBuilder.setTitle(R.string.warning);	 
 		alertDialogBuilder.setMessage(R.string.textQuit);
 		alertDialogBuilder.setCancelable(false);
-		alertDialogBuilder.setNegativeButton(R.string.ok,new DialogInterface.OnClickListener() {
+		alertDialogBuilder.setPositiveButton(R.string.ok,new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog,int id) {
 					MainActivity.super.onBackPressed();
 				}
 		});
 		
-		alertDialogBuilder.setPositiveButton(R.string.cancel,new DialogInterface.OnClickListener() {
+		alertDialogBuilder.setNegativeButton(R.string.cancel,new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog,int id) {
 				dialog.cancel();
 			}
@@ -295,15 +293,12 @@ public class MainActivity extends Activity {
 	
 	/** Retrieve the existing notes from the server */
 	private void retrieveNotesFromServer() {
+		progressDlg.show();
+		
 		repository.findAll(new ModelRepository.FindAllCallback<TextNotes>() {
 			@Override
 			public void onSuccess(List<TextNotes> textNotes) {
 				progressDlg.dismiss();
-				
-				for(int i=0;i<textNotes.size();i++){
-					textNotes.get(i).setSuccessfullySent(true);
-				}
-					
 				notesList.addAll((ArrayList<TextNotes>) textNotes);
 				nAdapter.notifyDataSetChanged();
 			}
@@ -333,36 +328,35 @@ public class MainActivity extends Activity {
 			@Override
 			public void onRemoveButtonClick(int position) {
 				listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_DISABLED);
+				
 				final int pos = position;
 				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-				alertDialogBuilder.setTitle(R.string.warning);	 
-				alertDialogBuilder.setMessage(R.string.textDelete);
+				alertDialogBuilder.setTitle(R.string.warning);
+				alertDialogBuilder.setMessage(getString(R.string.textDelete)+" " +((TextNotes) notesList.get(pos)).getText());
 				alertDialogBuilder.setCancelable(false);
-				alertDialogBuilder.setNegativeButton(R.string.ok,new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog,int id) {
-							TextNotes noteToBeDeleted = (TextNotes) notesList.get(pos);
-							
-							if(noteToBeDeleted.isSuccessfullySent()) {
-								noteToBeDeleted.destroy(new Model.Callback() {
-								    @Override
-								    public void onSuccess() {
-								    	notesList.remove(pos);
-										nAdapter.notifyDataSetChanged();
-								    }
-								    @Override
-								    public void onError(Throwable t) {
-								    	showAsToast("Deleting failed!\nCheck your network connection...");
-								    }
-								});
-							}
-							else {
-								notesList.remove(pos);
+				alertDialogBuilder.setPositiveButton(R.string.ok,new DialogInterface.OnClickListener() {
+					@SuppressWarnings("deprecation")
+					public void onClick(DialogInterface dialog,int id) {
+						progressDlg.show();
+						TextNotes noteToBeDeleted = (TextNotes) notesList.get(pos);
+						
+						noteToBeDeleted.destroy(new Model.Callback() {
+						    @Override
+						    public void onSuccess() {
+						    	progressDlg.dismiss();
+						    	notesList.remove(pos);
 								nAdapter.notifyDataSetChanged();
-							}
-						}
+						    }
+						    @Override
+						    public void onError(Throwable t) {
+						    	progressDlg.dismiss();
+						    	showAsToast("Deleting failed!\nCheck your network connection...");
+						    }
+						});
+					}
 				});
 				
-				alertDialogBuilder.setPositiveButton(R.string.cancel,new DialogInterface.OnClickListener() {
+				alertDialogBuilder.setNegativeButton(R.string.cancel,new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog,int id) {
 						dialog.cancel();
 					}
@@ -377,13 +371,8 @@ public class MainActivity extends Activity {
 		nAdapter.setTextViewClickListener(new NotesListAdapter.OnTextViewClickListener() {			
 			@Override
 			public void onTextViewClick(int position) {
-				if(notesList.get(position).isSuccessfullySent()){
-					TextNotes txtNote = (TextNotes) notesList.get(position);
-					showAsToast(txtNote.getText());
-				}
-				else {
-					showAsToast("This note couldn't be sent!\nCheck your connection...");
-				}
+				TextNotes txtNote = (TextNotes) notesList.get(position);
+				showAsToast(txtNote.getText());
 			}
 		});
 		
@@ -402,7 +391,7 @@ public class MainActivity extends Activity {
 		    	listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
 		    	
 		    	if (hasFocus) {
-		        	showSoftKeyboard(editTextBottom);
+		    		showSoftKeyboard(editTextBottom);
 		        }
 		        else {
 		        	hideSoftKeyboard(editTextBottom);
@@ -418,9 +407,11 @@ public class MainActivity extends Activity {
             	
             	// If TextNote is chosen
             	if(positionOfSpinner == 0) {	
-            		String txtNoteTxt = editTextBottom.getText().toString();
+            		final String txtNoteTxt = editTextBottom.getText().toString();
             		
             		if(!(txtNoteTxt.isEmpty())) {
+            			progressDlg.show();
+            			
             			newTxtNote = new TextNotes();
                 		newTxtNote.setText(txtNoteTxt);
                 		newTxtNote.setLongitude(longitude);
@@ -440,24 +431,23 @@ public class MainActivity extends Activity {
                 		newTxtNote.save(new Model.Callback() {
                 		    @Override
                 		    public void onSuccess() {
-                		    	newTxtNote.setSuccessfullySent(true);
+                		    	progressDlg.dismiss();
+                		    	notesList.add(newTxtNote);
+                		    	nAdapter.notifyDataSetChanged();
                 		    }
                 		 
                 		    @Override
                 		    public void onError(Throwable t) {
-                		    	newTxtNote.setText("WARNING!!! "+newTxtNote.getText());
-                		    	newTxtNote.setSuccessfullySent(false);
-                		    	nAdapter.notifyDataSetChanged();
-                		    	showAsToast("Sending failed!\nCheck your connection...");
+                		    	progressDlg.dismiss();
+                		    	editTextBottom.setText(txtNoteTxt);
+                		    	showAsToast("Sending failed!\nCheck your network connection...");
                 		    }
                 		});
-                		
-                		notesList.add(newTxtNote);
             		}
             		
             		else {
             			listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_DISABLED);
-            			showAsToast("Enter something to send.");
+            			showAsToast("Type something to send.");
             		}
             		
             		editTextBottom.setText("");
@@ -480,8 +470,6 @@ public class MainActivity extends Activity {
             	
             	listView.setFocusable(false);
             	listView.setFocusableInTouchMode(false);
-            	
-            	nAdapter.notifyDataSetChanged();
             }
             
         });
@@ -490,6 +478,8 @@ public class MainActivity extends Activity {
 		editTextBottom.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+				
 				editTextBottom.setCursorVisible(true);
 				editTextBottom.setFocusable(true);
 				editTextBottom.setFocusableInTouchMode(true);
@@ -537,7 +527,6 @@ public class MainActivity extends Activity {
 		    public void onLocationChanged(Location location) {
 		    	latitude = location.getLatitude();
 		    	longitude = location.getLongitude();
-//		    	showAsToast("Longitude: "+longitude+"\nLatitude: "+latitude);
 		    }
 		    public void onStatusChanged(String provider, int status, Bundle extras) {}
 
