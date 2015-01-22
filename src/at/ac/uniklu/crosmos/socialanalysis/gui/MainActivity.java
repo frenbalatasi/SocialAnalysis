@@ -85,6 +85,7 @@ public class MainActivity extends Activity {
 	private LocationManager locationManager;
 	private LocationListener locationListener;
 	private String locationProvider;
+	private Location lastKnownLocation;
 	private double latitude = 0.0;
 	private double longitude = 0.0;
 	
@@ -138,14 +139,7 @@ public class MainActivity extends Activity {
 	    // Location services registration and obtaining the last known location
 	    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 	    locationProvider = locationManager.getBestProvider(new Criteria(), false);
-	    Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
 	    
-    	// If last location is known, then update the location information with that
-    	// in order to save some time while obtaining the current location information
-    	if (lastKnownLocation != null) {
-    	      locationListener.onLocationChanged(lastKnownLocation);
-    	}
-    	
     	 // Grab the RestAdapter instance.
 	 	adapter = new RestAdapter(getApplicationContext(), "http://192.168.0.100:3000/api");
 
@@ -173,6 +167,14 @@ public class MainActivity extends Activity {
 	    // location service is enabled. If not, show the 
 	    // AlertDialog to drag the user.
 	    checkIfLocationServiceIsActivated();
+	    
+	    lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+	    
+    	// If last location is known, then update the location information with that
+    	// in order to save some time while obtaining the current location information
+    	if (lastKnownLocation != null) {
+    	      locationListener.onLocationChanged(lastKnownLocation);
+    	}
 	    
 	    // Request location updates from each provider, which is available in every 5 seconds and 1 meter
 	    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10000, 1, locationListener);
