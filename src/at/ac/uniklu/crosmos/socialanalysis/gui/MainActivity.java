@@ -101,6 +101,7 @@ public class MainActivity extends Activity {
 	//**************************
 	private TextNotesRepository repository;
 	private RestAdapter adapter;
+	private final String serverAddress = "http://192.168.0.100:3000/api";
 	
 	//*****************************************************
 	// Unique ID for the device, which app is installed.
@@ -141,7 +142,7 @@ public class MainActivity extends Activity {
 	    locationProvider = locationManager.getBestProvider(new Criteria(), false);
 	    
     	 // Grab the RestAdapter instance.
-	 	adapter = new RestAdapter(getApplicationContext(), "http://192.168.0.100:3000/api");
+	 	adapter = new RestAdapter(getApplicationContext(), serverAddress);
 
 	    // Instantiate our repository for text notes.
 	 	repository = adapter.createRepository(TextNotesRepository.class);
@@ -251,24 +252,24 @@ public class MainActivity extends Activity {
 	// Settings in the upper-right corner
 	//***************************************************************************
 	//***************************************************************************
-	@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
-	}
+//	@Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.main, menu);
+//        return true;
+//    }
+//	
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//		// Handle action bar item clicks here. The action bar will
+//		// automatically handle clicks on the Home/Up button, so long
+//		// as you specify a parent activity in AndroidManifest.xml.
+//		int id = item.getItemId();
+//		if (id == R.id.action_settings) {
+//			return true;
+//		}
+//		return super.onOptionsItemSelected(item);
+//	}
 	//***************************************************************************
 	//***************************************************************************
 	// TO-DO
@@ -418,7 +419,7 @@ public class MainActivity extends Activity {
                 		newTxtNote.setText(txtNoteTxt);
                 		newTxtNote.setLongitude(longitude);
                 		newTxtNote.setLatitude(latitude);
-                		newTxtNote.setTimestamp(new Date().getTime());
+                		newTxtNote.setTimestamp(System.currentTimeMillis()/1000);
                 		newTxtNote.setDeviceID(androidID);
                 		
                 		Map<String,?> parameters = ImmutableMap.of(
@@ -502,7 +503,6 @@ public class MainActivity extends Activity {
 		            	editTextBottom.setVisibility(View.VISIBLE);
 		            	imageView.setVisibility(View.INVISIBLE);
 		            	
-		            	showAsToast("Type mode: ON");
 		            }
 		            	
 		            if(positionOfSpinner == 1 || positionOfSpinner == 2) {

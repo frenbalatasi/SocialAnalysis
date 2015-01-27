@@ -75,7 +75,7 @@ public class Notes extends Model {
 	}
 	
 	public static String[] typesOfNotes() {
-		final String[] typesOfNotes = {"Type>","Audio>","Video>"};
+		final String[] typesOfNotes = {"Type>"};
 		return typesOfNotes;
 	}
 }
