@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Social Analysis</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_resend">Re-Send Notes</string>
     
     <string name="warning">Warning!</string>
     <string name="textWarning">In order to use our services, we kindly ask you to enable location services. 

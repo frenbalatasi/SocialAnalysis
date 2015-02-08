@@ -47,6 +47,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import at.ac.uniklu.crosmos.socialanalysis.R;
+import at.ac.uniklu.crosmos.socialanalysis.database.DatabaseHandler;
 import at.ac.uniklu.crosmos.socialanalysis.notes.AudioNotes;
 import at.ac.uniklu.crosmos.socialanalysis.notes.Notes;
 import at.ac.uniklu.crosmos.socialanalysis.notes.TextNotes;
@@ -89,6 +90,12 @@ public class MainActivity extends Activity {
 	private double latitude = 0.0;
 	private double longitude = 0.0;
 	
+	//******************************************
+	// Local database variables for offline mode
+	//******************************************
+	private DatabaseHandler dbHandler;
+	private ArrayList<TextNotes> offlineTxtNotes;
+	
 	//**************************************************
 	// Other global variables, which are specific to GUI
 	//**************************************************
@@ -123,9 +130,13 @@ public class MainActivity extends Activity {
 		buttonSend = (Button)findViewById(R.id.buttonSend);
 		notesList = new ArrayList<Notes>();
 		progressDlg = new ProgressDialog(MainActivity.this);
-		
 		progressDlg.setMessage("Connecting...");
 		progressDlg.setCancelable(false);
+		
+		// Instantiation of database for offline mode
+  		dbHandler = new DatabaseHandler(this);
+  		dbHandler.open();
+  		offlineTxtNotes = new ArrayList<TextNotes>();
 		
 		// The list of notes, which are kept in the ListView
 		nAdapter = new NotesListAdapter(this);
@@ -164,6 +175,18 @@ public class MainActivity extends Activity {
 	    // Start to retrieve the notes from server
 	    retrieveNotesFromServer();
 	    
+	    // Retrieve the offline notes from local database
+	    dbHandler.open();
+  		offlineTxtNotes = dbHandler.getAllTextNotes();
+  		
+  		// Adding the offline notes to the listView
+  		for (int i = 0; i < offlineTxtNotes.size(); i++) {
+			offlineTxtNotes.get(i).setText("!!! "+offlineTxtNotes.get(i).getText());
+		}
+  		
+  		notesList.addAll((ArrayList<TextNotes>) offlineTxtNotes);
+		nAdapter.notifyDataSetChanged();
+	    
 	    // Every time that the app is activated, check if the 
 	    // location service is enabled. If not, show the 
 	    // AlertDialog to drag the user.
@@ -199,6 +222,8 @@ public class MainActivity extends Activity {
 		
 		// Disable the listeners
 	    disableListeners();
+	    
+	    dbHandler.close();
 	}
 	
 	@Override
@@ -210,6 +235,8 @@ public class MainActivity extends Activity {
 		
 		// Disable the listeners
 	    disableListeners();
+	    
+	    dbHandler.close();
 	}
 	
 	@Override
@@ -244,6 +271,8 @@ public class MainActivity extends Activity {
 	    
 	    // Disable the listeners
 	    disableListeners();
+	    
+	    dbHandler.close();
 	}
 	
 	//***************************************************************************
@@ -252,24 +281,25 @@ public class MainActivity extends Activity {
 	// Settings in the upper-right corner
 	//***************************************************************************
 	//***************************************************************************
-//	@Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.main, menu);
-//        return true;
-//    }
-//	
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-//		// Handle action bar item clicks here. The action bar will
-//		// automatically handle clicks on the Home/Up button, so long
-//		// as you specify a parent activity in AndroidManifest.xml.
-//		int id = item.getItemId();
-//		if (id == R.id.action_settings) {
-//			return true;
-//		}
-//		return super.onOptionsItemSelected(item);
-//	}
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_resend) {
+			resendTextNotesToServer();
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
 	//***************************************************************************
 	//***************************************************************************
 	// TO-DO
@@ -277,9 +307,42 @@ public class MainActivity extends Activity {
 	//***************************************************************************
 	//***************************************************************************
 
-	/** Add the related note to the server */
-	private void addNoteToServer() {
-		
+	/** Re-send the related notes to the server */
+	@SuppressWarnings("deprecation")
+	private void resendTextNotesToServer() {
+//		progressDlg.show();
+//		for (int i = 0; i < offlineTxtNotes.size(); i++) {
+//			final TextNotes reSendTxtNote = offlineTxtNotes.get(i);
+//			String reSend = reSendTxtNote.getText();
+//			reSendTxtNote.setText(reSend.substring(4));
+//			
+//			Map<String,?> parameters = ImmutableMap.of(
+//                    "text", reSendTxtNote.getText(),
+//                    "latitude", reSendTxtNote.getLatitude(),
+//                    "longitude",reSendTxtNote.getLongitude(),
+//                    "timestamp",reSendTxtNote.getTimestamp(),
+//                    "deviceID", reSendTxtNote.getDeviceID());
+//    		
+//			TextNotes tmp = repository.createModel(parameters);
+//    		
+//			tmp.save(new Model.Callback() {
+//    		    @Override
+//    		    public void onSuccess() {
+//    		    	offlineTxtNotes.remove(reSendTxtNote);
+//    		    	dbHandler.deleteTextNote(reSendTxtNote);
+//    		    	nAdapter.notifyDataSetChanged();
+//    		    	progressDlg.dismiss();
+//    		    }
+//    		 
+//    		    @Override
+//    		    public void onError(Throwable t) {
+//    		    	reSendTxtNote.setText("!!! "+newTxtNote.getText());
+//    		    	nAdapter.notifyDataSetChanged();
+//    		    	showAsToast("Re-Sending failed...");
+//    		    	progressDlg.dismiss();
+//    		    }
+//    		});
+//		}
 	}
 	
 	/** Remove the related note from the server */
@@ -309,7 +372,7 @@ public class MainActivity extends Activity {
 			@Override
             public void onError(Throwable t) {
 				progressDlg.dismiss();
-                showAsToast("Notes couldn't be retrieved!\nCheck your network connection...");
+                showAsToast("Notes couldn't be retrieved!\nSwitching to Offline Mode...");
             }
         });
     }
@@ -342,20 +405,36 @@ public class MainActivity extends Activity {
 					public void onClick(DialogInterface dialog,int id) {
 						progressDlg.show();
 						TextNotes noteToBeDeleted = (TextNotes) notesList.get(pos);
+						Boolean hasOfflineNote = false;
 						
-						noteToBeDeleted.destroy(new Model.Callback() {
-						    @Override
-						    public void onSuccess() {
-						    	progressDlg.dismiss();
-						    	notesList.remove(pos);
+						for (int i = 0; i < offlineTxtNotes.size(); i++) {
+							if(offlineTxtNotes.get(i).getTimestamp() == noteToBeDeleted.getTimestamp()) {
+								hasOfflineNote = true;
+								dbHandler.deleteTextNote(noteToBeDeleted);
+								notesList.remove(pos);
+								offlineTxtNotes.remove(pos);
 								nAdapter.notifyDataSetChanged();
-						    }
-						    @Override
-						    public void onError(Throwable t) {
-						    	progressDlg.dismiss();
-						    	showAsToast("Deleting failed!\nCheck your network connection...");
-						    }
-						});
+								progressDlg.dismiss();
+								showAsToast("Deleted locally...");
+							}
+						}
+						
+						if(!hasOfflineNote) {
+							noteToBeDeleted.destroy(new Model.Callback() {
+							    @Override
+							    public void onSuccess() {
+							    	progressDlg.dismiss();
+							    	notesList.remove(pos);
+									nAdapter.notifyDataSetChanged();
+									showAsToast("Deleted from the server...");
+							    }
+							    @Override
+							    public void onError(Throwable t) {
+							    	progressDlg.dismiss();
+							    	showAsToast("Deleting failed!\nCheck your network connection...");
+							    }
+							});
+						}
 					}
 				});
 				
@@ -442,8 +521,12 @@ public class MainActivity extends Activity {
                 		    @Override
                 		    public void onError(Throwable t) {
                 		    	progressDlg.dismiss();
-                		    	editTextBottom.setText(txtNoteTxt);
-                		    	showAsToast("Sending failed!\nCheck your network connection...");
+                		    	dbHandler.createTextNote(newTxtNote);
+                		    	newTxtNote.setText("!!! "+newTxtNote.getText());
+                		    	notesList.add(newTxtNote);
+                		    	offlineTxtNotes.add(newTxtNote);
+                		    	nAdapter.notifyDataSetChanged();
+                		    	showAsToast("Sending failed!\nOffline mode: Saving the note locally...");
                 		    }
                 		});
             		}
