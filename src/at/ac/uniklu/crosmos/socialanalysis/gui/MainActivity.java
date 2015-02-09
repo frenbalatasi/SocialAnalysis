@@ -180,11 +180,7 @@ public class MainActivity extends Activity {
   		offlineTxtNotes = dbHandler.getAllTextNotes();
   		
   		// Adding the offline notes to the listView
-  		for (int i = 0; i < offlineTxtNotes.size(); i++) {
-			offlineTxtNotes.get(i).setText("!!! "+offlineTxtNotes.get(i).getText());
-		}
-  		
-  		notesList.addAll((ArrayList<TextNotes>) offlineTxtNotes);
+  		notesList.addAll(offlineTxtNotes);
 		nAdapter.notifyDataSetChanged();
 	    
 	    // Every time that the app is activated, check if the 
@@ -275,12 +271,6 @@ public class MainActivity extends Activity {
 	    dbHandler.close();
 	}
 	
-	//***************************************************************************
-	//***************************************************************************
-	// TO-DO
-	// Settings in the upper-right corner
-	//***************************************************************************
-	//***************************************************************************
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -294,22 +284,17 @@ public class MainActivity extends Activity {
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
-		if (id == R.id.action_resend) {
-			resendTextNotesToServer();
+		if (id == R.id.action_retrieve) {
+			retrieveNotesFromServer();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	//***************************************************************************
-	//***************************************************************************
-	// TO-DO
-	// Settings in the upper-right corner
-	//***************************************************************************
-	//***************************************************************************
 
 	/** Re-send the related notes to the server */
 	@SuppressWarnings("deprecation")
 	private void resendTextNotesToServer() {
+		
 //		progressDlg.show();
 //		for (int i = 0; i < offlineTxtNotes.size(); i++) {
 //			final TextNotes reSendTxtNote = offlineTxtNotes.get(i);
@@ -358,6 +343,7 @@ public class MainActivity extends Activity {
     }
 	
 	/** Retrieve the existing notes from the server */
+	@SuppressWarnings("deprecation")
 	private void retrieveNotesFromServer() {
 		progressDlg.show();
 		
@@ -365,14 +351,21 @@ public class MainActivity extends Activity {
 			@Override
 			public void onSuccess(List<TextNotes> textNotes) {
 				progressDlg.dismiss();
-				notesList.addAll((ArrayList<TextNotes>) textNotes);
+				for (int i = 0; i < textNotes.size(); i++) {
+					for (int j = 0; j < notesList.size(); j++) {
+						if(textNotes.get(i).getTimestamp() == notesList.get(j).getTimestamp()) {
+							textNotes.remove(i);
+						}
+					}
+				}
+				notesList.addAll(textNotes);
 				nAdapter.notifyDataSetChanged();
 			}
 			
 			@Override
             public void onError(Throwable t) {
 				progressDlg.dismiss();
-                showAsToast("Notes couldn't be retrieved!\nSwitching to Offline Mode...");
+                showAsToast("Notes couldn't be retrieved!\nCheck your connection...");
             }
         });
     }
@@ -453,8 +446,62 @@ public class MainActivity extends Activity {
 		nAdapter.setTextViewClickListener(new NotesListAdapter.OnTextViewClickListener() {			
 			@Override
 			public void onTextViewClick(int position) {
-				TextNotes txtNote = (TextNotes) notesList.get(position);
-				showAsToast(txtNote.getText());
+				final int pos = position;
+				final TextNotes selectedNote = ((TextNotes) notesList.get(pos));
+				
+				if(selectedNote.getText().startsWith("!!!")) {
+					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+					alertDialogBuilder.setTitle(R.string.warning);
+					alertDialogBuilder.setMessage(getString(R.string.textResend)+" " +selectedNote.getText());
+					alertDialogBuilder.setCancelable(false);
+					alertDialogBuilder.setPositiveButton(R.string.ok,new DialogInterface.OnClickListener() {
+						@SuppressWarnings("deprecation")
+						public void onClick(DialogInterface dialog,int id) {
+							progressDlg.show();
+							selectedNote.setText(selectedNote.getText().substring(4));
+							Map<String,?> parameters = ImmutableMap.of(
+				                    "text", selectedNote.getText(),
+				                    "latitude", selectedNote.getLatitude(),
+				                    "longitude",selectedNote.getLongitude(),
+				                    "timestamp",selectedNote.getTimestamp(),
+				                    "deviceID", selectedNote.getDeviceID());
+				    		
+							TextNotes tmp = repository.createModel(parameters);
+				    		
+							tmp.save(new Model.Callback() {
+				    		    @Override
+				    		    public void onSuccess() {
+				    		    	offlineTxtNotes.remove(pos);
+				    		    	notesList.remove(pos);
+				    		    	notesList.add(pos,selectedNote);
+				    		    	dbHandler.deleteTextNote(selectedNote);
+				    		    	nAdapter.notifyDataSetChanged();
+				    		    	progressDlg.dismiss();
+				    		    }
+				    		 
+				    		    @Override
+				    		    public void onError(Throwable t) {
+				    		    	selectedNote.setText("!!! "+newTxtNote.getText());
+				    		    	nAdapter.notifyDataSetChanged();
+				    		    	showAsToast("SENDING FAILED!\nCheck your connection...");
+				    		    	progressDlg.dismiss();
+				    		    }
+				    		});
+						}
+					});
+					
+					alertDialogBuilder.setNegativeButton(R.string.cancel,new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog,int id) {
+							dialog.cancel();
+						}
+					});
+
+					AlertDialog alertDialog = alertDialogBuilder.create();
+					alertDialog.show();
+				}
+				else {
+					showAsToast("Selected note: "+selectedNote.getText());
+				}
 			}
 		});
 		
@@ -515,18 +562,19 @@ public class MainActivity extends Activity {
                 		    public void onSuccess() {
                 		    	progressDlg.dismiss();
                 		    	notesList.add(newTxtNote);
+                		    	showAsToast("Sent successfully to the server...");
                 		    	nAdapter.notifyDataSetChanged();
                 		    }
                 		 
                 		    @Override
                 		    public void onError(Throwable t) {
-                		    	progressDlg.dismiss();
-                		    	dbHandler.createTextNote(newTxtNote);
                 		    	newTxtNote.setText("!!! "+newTxtNote.getText());
+                		    	dbHandler.createTextNote(newTxtNote);
                 		    	notesList.add(newTxtNote);
                 		    	offlineTxtNotes.add(newTxtNote);
                 		    	nAdapter.notifyDataSetChanged();
-                		    	showAsToast("Sending failed!\nOffline mode: Saving the note locally...");
+                		    	progressDlg.dismiss();
+                		    	showAsToast("SENDING FAILED!\nSaving locally...");
                 		    }
                 		});
             		}

@@ -3,6 +3,7 @@
 
     <string name="app_name">Social Analysis</string>
     <string name="action_resend">Re-Send Notes</string>
+     <string name="action_retrieve">Retrieve Notes</string>
     
     <string name="warning">Warning!</string>
     <string name="textWarning">In order to use our services, we kindly ask you to enable location services. 
@@ -10,10 +11,11 @@
         You cannot use our services without activating location services of your smartphone.</string>
     <string name="textQuit">You are about to quit Social Analysis application.</string>
     <string name="textDelete">You are about to delete this note:</string>
-      
+    <string name="textResend">You are about to try to send again this note to the server:</string>
+    <string name="textRetrieve">You are about to retrieve the notes from the server:</string>  
     
     <string name="send">Send</string>
     <string name="ok">OK</string>
-    <string name="cancel">CANCEL</string>
+    <string name="cancel">Cancel</string>
     
 </resources>
